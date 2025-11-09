@@ -1,56 +1,43 @@
 (function () {
-  const msg = document.getElementById("msg");
-  const goBtn = document.getElementById("go");
+  const params = new URLSearchParams(location.search);
+  let target = params.get("u") || "";
 
-  function show(html) { msg.innerHTML = html; }
-
-  // Accept ?u=https://... or #u=https://...
-  const qs = new URLSearchParams(location.search);
-  let target = qs.get("u") || "";
+  // Also support #u=… (so you can use a fragment instead of ?u= which looks less like a redirector)
   if (!target && location.hash.startsWith("#")) {
     const h = new URLSearchParams(location.hash.slice(1));
     target = h.get("u") || "";
   }
+
+  const destEl = document.getElementById("dest");
+  const btn = document.getElementById("go");
+
   if (!target) {
-    show('Missing <code>u</code> parameter. Example: <code>?u=https://username.codeberg.page/project/</code>');
-    goBtn.style.display = "none";
+    destEl.textContent = "Missing u parameter.";
     return;
   }
 
-  // Validate URL
   let url;
-  try { url = new URL(target); } catch {
-    show("Invalid URL.");
-    goBtn.style.display = "none";
+  try {
+    url = new URL(target);
+  } catch {
+    destEl.textContent = "Invalid URL.";
     return;
   }
 
-  // Reduce “open-redirect” abuse: allow only Codeberg hosts
-  const allowed = [
-    /\.codeberg\.page$/i,
-    /^codeberg\.org$/i,
-    /\.codeberg\.org$/i
-  ].some(rx => rx.test(url.hostname));
-  if (!allowed) {
-    show(`Blocked: only Codeberg targets are allowed. Got <code>${url.hostname}</code>.`);
-    goBtn.style.display = "none";
+  // OPTIONAL: restrict to Codeberg to avoid abuse (keep if you only need Codeberg)
+  const allowedHosts = [/\.codeberg\.page$/i, /^codeberg\.org$/i, /\.codeberg\.org$/i];
+  const ok = allowedHosts.some(rx => rx.test(url.hostname));
+  if (!ok) {
+    destEl.innerHTML = `Blocked: only Codeberg targets are allowed. Got <code>${url.hostname}</code>.`;
     return;
   }
 
-  // Present destination + require user action (helps with Safe Links detonations)
-  const href = url.href;
-  show(`Proceed to: <a rel="noreferrer" href="${href}">${href}</a>`);
-  goBtn.href = href;
+  // Show as plain text + make a button the user must click.
+  destEl.textContent = url.href;
 
-  // Optional auto-redirect when explicitly requested (add &go=1)
-  if (qs.get("go") === "1") {
-    // Short delay so scanners can fetch the HTML before we navigate
-    setTimeout(() => location.replace(href), 80);
-  } else {
-    // Click navigates without leaving this page in history
-    goBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      location.replace(href);
-    });
-  }
+  btn.disabled = false;
+  btn.addEventListener("click", () => {
+    // Use noopener for safety
+    window.open(url.href, "_blank", "noopener,noreferrer");
+  });
 })();

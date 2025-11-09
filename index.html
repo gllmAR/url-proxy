@@ -3,31 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Redirecting…</title>
-  <!-- Keep this strict but allow our own script and favicon -->
+  <title>Proceed to destination</title>
+  <!-- GitHub Pages can't set HTTP headers; use a meta CSP that allows our own script + inline styles -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none';
-                 script-src 'self';
-                 style-src 'unsafe-inline';
-                 img-src 'self' data:;
-                 base-uri 'none';
-                 form-action 'none';
-                 connect-src 'none';
-                 frame-ancestors 'none'">
+        content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.4; }
-    code { background: #f3f3f3; padding:.15rem .35rem; border-radius:.25rem; }
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.45; }
     .box { max-width: 56rem; }
-    .btn { display:inline-block; margin-top:1rem; padding:.5rem .9rem; border-radius:.4rem; border:1px solid #ccc; text-decoration:none; }
+    button { font: inherit; padding: .6rem 1rem; border-radius: .5rem; border: 1px solid #ddd; cursor: pointer; }
+    code { background: #f3f3f3; padding: .15rem .35rem; border-radius: .25rem; }
+    .url { word-break: break-all; }
   </style>
-  <link rel="icon" href="favicon.ico">
 </head>
 <body>
   <div class="box">
-    <h1>Redirecting…</h1>
-    <p>If you are not redirected automatically, the destination will appear below.</p>
-    <p id="msg"></p>
-    <a id="go" class="btn" rel="noreferrer">Open link</a>
+    <h1>Proceed to destination</h1>
+    <p>This page does <strong>not</strong> auto-redirect. Click the button to open the destination in a new tab.</p>
+    <p id="dest" class="url"></p>
+    <p>
+      <button id="go" disabled>Open link</button>
+    </p>
+    <p>If nothing shows up, supply a destination with either:
+      <br> <code>?u=https://username.codeberg.page/project/</code>
+      <br> or <code>#u=https://username.codeberg.page/project/</code>
+    </p>
   </div>
   <script src="app.js"></script>
 </body>
