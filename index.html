@@ -3,31 +3,107 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Proceed to destination</title>
-  <!-- GitHub Pages can't set HTTP headers; use a meta CSP that allows our own script + inline styles -->
+  <title>Open destination</title>
+
+  <!-- CSP: no network loads, allow inline styles & scripts -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+        content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
+
   <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.45; }
-    .box { max-width: 56rem; }
-    button { font: inherit; padding: .6rem 1rem; border-radius: .5rem; border: 1px solid #ddd; cursor: pointer; }
-    code { background: #f3f3f3; padding: .15rem .35rem; border-radius: .25rem; }
-    .url { word-break: break-all; }
+    :root { color-scheme: light dark; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 2rem; line-height: 1.45; }
+    .wrap { max-width: 56rem; }
+    button { padding: .6rem 1rem; border-radius: .5rem; border: 0; cursor: pointer; }
+    .note { opacity: .75; font-size: .95rem; }
+    code { background: #f2f2f2; padding: .1rem .35rem; border-radius: .25rem; }
+    @media (prefers-color-scheme: dark) { code { background: #2a2a2a; } }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>Proceed to destination</h1>
-    <p>This page does <strong>not</strong> auto-redirect. Click the button to open the destination in a new tab.</p>
-    <p id="dest" class="url"></p>
+  <div class="wrap">
+    <h1>Open destination</h1>
+    <p class="note">
+      This page avoids <em>open-redirect</em> patterns to play nice with link protection.
+      Provide the destination as host + path (no scheme).
+    </p>
+
+    <p id="destInfo"></p>
+
     <p>
-      <button id="go" disabled>Open link</button>
+      <button id="openBtn" hidden>Open link</button>
     </p>
-    <p>If nothing shows up, supply a destination with either:
-      <br> <code>?u=https://username.codeberg.page/project/</code>
-      <br> or <code>#u=https://username.codeberg.page/project/</code>
-    </p>
+
+    <p class="note" id="help"></p>
   </div>
-  <script src="app.js"></script>
+
+  <script>
+    (function () {
+      // Accept either path segments or query params
+      // Path form: /url-proxy/<host>/<path…>
+      const pathParts = location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+      // pathParts looks like ["url-proxy", "<host>", "gd-obs-navigator"]
+      let host = "";
+      let path = "";
+
+      if (pathParts.length >= 2) {
+        // everything after the first segment (repo name) is the payload
+        host = pathParts[1] || "";
+        path = "/" + pathParts.slice(2).join("/");
+      } else {
+        // Query form: ?h=<host>&p=/path
+        const qs = new URLSearchParams(location.search);
+        host = qs.get("h") || "";
+        path = qs.get("p") || "";
+      }
+
+      const info = document.getElementById("destInfo");
+      const help = document.getElementById("help");
+      const btn  = document.getElementById("openBtn");
+
+      function show(msg) { info.innerHTML = msg; }
+
+      // No full URLs allowed in inputs — prevents Safe Links from flagging by simple pattern match
+      const hasScheme = /(^|[^a-z])https?:\/\//i;
+
+      if (!host) {
+        show(
+          `Missing destination.<br>Examples:<br>
+          • Path form: <code>/url-proxy/username.codeberg.page/gd-obs-navigator/</code><br>
+          • Query form: <code>?h=username.codeberg.page&amp;p=/gd-obs-navigator/</code>`
+        );
+        return;
+      }
+
+      if (hasScheme.test(host) || hasScheme.test(path)) {
+        show(`Blocked: do not include <code>http(s)://</code>. Provide <code>host</code> and optional <code>path</code> only.`);
+        return;
+      }
+
+      // OPTIONAL: allow-list (tighten as needed)
+      const allowed = [
+        /\.codeberg\.page$/i,
+        /^codeberg\.org$/i, /\.codeberg\.org$/i
+      ];
+      const ok = allowed.some(rx => rx.test(host));
+      if (!ok) {
+        show(`Blocked host <code>${host}</code>. Only Codeberg is allowed here.`);
+        return;
+      }
+
+      // Normalize path
+      if (path && !path.startsWith("/")) path = "/" + path;
+
+      // Don’t print a clickable link (prevents scanners from following); just show a hint
+      show(`Ready to open: <code>${host}${path}</code>`);
+      help.textContent = `Tip: share links without the scheme (no "https://"). This reduces false positives from link protection.`;
+
+      btn.hidden = false;
+      btn.addEventListener("click", () => {
+        const url = "https://" + host + path;
+        // Avoid leaving the proxy in history
+        location.replace(url);
+      });
+    })();
+  </script>
 </body>
 </html>
