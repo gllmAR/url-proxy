@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirecting…</title>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.4; }
+    code { background: #f3f3f3; padding: .15rem .35rem; border-radius: .25rem; }
+    .box { max-width: 56rem; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Redirecting…</h1>
+    <p>If you are not redirected automatically, the destination will appear below.</p>
+    <p id="msg"></p>
+  </div>
+  <script>
+    (function () {
+      // Helpers
+      const params = new URLSearchParams(location.search);
+      let target = params.get("u") || "";
+
+      // Also allow hash form: #u=https://…
+      if (!target && location.hash.startsWith("#")) {
+        const h = new URLSearchParams(location.hash.slice(1));
+        target = h.get("u") || "";
+      }
+
+      function show(text) {
+        document.getElementById("msg").innerHTML = text;
+      }
+
+      if (!target) {
+        show("Missing <code>u</code> parameter. Example: <code>?u=https://username.codeberg.page/project/</code>");
+        return;
+      }
+
+      // Try to parse and validate the destination
+      let url;
+      try { url = new URL(target); } catch {
+        show("Invalid URL.");
+        return;
+      }
+
+      // OPTIONAL: restrict to Codeberg to prevent phishing/open-redirect abuse
+      const allowedHosts = [
+        // Codeberg Pages & main site
+        /\.codeberg\.page$/i,
+        /^codeberg\.org$/i,
+        /\.codeberg\.org$/i
+      ];
+      const ok = allowedHosts.some(rx => rx.test(url.hostname));
+      if (!ok) {
+        show(`Blocked: only Codeberg targets are allowed. Got <code>${url.hostname}</code>.`);
+        return;
+      }
+
+      // Use replace() to avoid leaving the proxy in history
+      // Note: meta refresh can't be used without JS because we need to inject the URL safely.
+      show(`Proceed to: <a rel="noreferrer" href="${url.href}">${url.href}</a>`);
+      // Small delay so Safe Links can fetch the HTML cleanly before we jump
+      setTimeout(() => { location.replace(url.href); }, 50);
+    })();
+  </script>
+</body>
+</html>
