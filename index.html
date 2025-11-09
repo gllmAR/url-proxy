@@ -4,36 +4,31 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Redirecting…</title>
-
-  <!-- Tight CSP that still allows our own JS and the favicon -->
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'none';
-    script-src 'self';
-    style-src 'unsafe-inline';
-    img-src 'self' data:;
-    connect-src 'none';
-    font-src 'none';
-    object-src 'none';
-    media-src 'none';
-    frame-src 'none';
-    base-uri 'none';
-    form-action 'none';
-    frame-ancestors 'none';
-  ">
-
+  <!-- Keep this strict but allow our own script and favicon -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 script-src 'self';
+                 style-src 'unsafe-inline';
+                 img-src 'self' data:;
+                 base-uri 'none';
+                 form-action 'none';
+                 connect-src 'none';
+                 frame-ancestors 'none'">
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; line-height: 1.4; }
-    code { background: #f3f3f3; padding: .15rem .35rem; border-radius: .25rem; }
+    code { background: #f3f3f3; padding:.15rem .35rem; border-radius:.25rem; }
     .box { max-width: 56rem; }
+    .btn { display:inline-block; margin-top:1rem; padding:.5rem .9rem; border-radius:.4rem; border:1px solid #ccc; text-decoration:none; }
   </style>
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
   <div class="box">
     <h1>Redirecting…</h1>
     <p>If you are not redirected automatically, the destination will appear below.</p>
     <p id="msg"></p>
-    <p id="linkwrap" hidden>Proceed to: <a id="link" rel="noreferrer"></a></p>
+    <a id="go" class="btn" rel="noreferrer">Open link</a>
   </div>
-  <script src="./redirect.js" defer></script>
+  <script src="app.js"></script>
 </body>
 </html>
